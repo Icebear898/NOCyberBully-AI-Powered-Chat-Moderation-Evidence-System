@@ -1,5 +1,3 @@
-# CyberBull V2 (MVP)
-
 AI-Powered Cyberbullying Detection & Auto-Response System (MVP) using FastAPI + WebSocket and a simple web frontend.
 
 ## Features
