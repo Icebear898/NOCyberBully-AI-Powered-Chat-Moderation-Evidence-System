@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CyberBull V2 - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Incident Dashboard</h2>
+    <p><a href="/">Back to Chat</a></p>
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">ID</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Sender</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Victim</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Words</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Severity</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Screenshot</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Created</th>
+          <th style="text-align:left; border-bottom: 1px solid #334155;">Report</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.id }}</td>
+          <td>{{ log.sender }}</td>
+          <td>{{ log.victim }}</td>
+          <td>{{ log.detected_words }}</td>
+          <td>{{ log.severity }}</td>
+          <td>{% if log.screenshot_path %}Saved{% else %}-{% endif %}</td>
+          <td>{{ log.created_at }}</td>
+          <td>
+            <a href="/report?offender={{ log.sender }}&victim={{ log.victim }}">Download</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 20px; background: #0f172a; color: #e2e8f0; }
+.container { max-width: 800px; margin: 0 auto; }
+h2 { margin-top: 0; }
+.hidden { display: none; }
+.login { display: flex; gap: 8px; margin-bottom: 12px; }
+.login input { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; background: #0b1220; color: #e2e8f0; }
+.login select { padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; background: #0b1220; color: #e2e8f0; }
+.login button { padding: 8px 12px; border: none; border-radius: 6px; background: #22c55e; color: #0b1220; font-weight: 600; cursor: pointer; }
+.chat-window { height: 60vh; overflow-y: auto; border: 1px solid #334155; border-radius: 8px; padding: 12px; background: #0b1220; }
+.composer { display: flex; gap: 8px; margin-top: 8px; }
+.composer input { flex: 1; padding: 10px 12px; border-radius: 6px; border: 1px solid #334155; background: #0b1220; color: #e2e8f0; }
+.composer button { padding: 10px 14px; border: none; border-radius: 6px; background: #3b82f6; color: white; font-weight: 600; cursor: pointer; }
+.bubble { max-width: 70%; padding: 8px 10px; border-radius: 10px; margin: 6px 0; display: inline-block; }
+.me { background: #1d4ed8; color: white; align-self: flex-end; }
+.other { background: #334155; color: #e2e8f0; align-self: flex-start; }
+.system { background: #0ea5e9; color: #0b1220; }
+.bot { background: #f59e0b; color: #0b1220; }
+.row { display: flex; }
