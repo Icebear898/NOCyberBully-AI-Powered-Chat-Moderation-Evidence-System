@@ -16,7 +16,7 @@ function appendBubble(text, type = 'other') {
 
 function connect() {
   myUsername = document.getElementById('username').value.trim();
-  peerUsername = document.getElementById('peer').value.trim();
+  peerUsername = document.getElementById('peer').value.trim().toLowerCase();
   const sensitivity = document.getElementById('sensitivity').value;
   if (!myUsername || !peerUsername) {
     alert('Enter both usernames');
@@ -27,7 +27,7 @@ function connect() {
   form.append('username', myUsername);
   form.append('sensitivity', sensitivity);
   fetch('/settings', { method: 'POST', body: form }).catch(() => {});
-  ws = new WebSocket(`ws://${location.host}/ws/${encodeURIComponent(myUsername)}`);
+  ws = new WebSocket(`ws://${location.host}/ws/${encodeURIComponent(myUsername.trim().toLowerCase())}`);
 
   ws.onopen = () => {
     document.getElementById('chatArea').classList.remove('hidden');

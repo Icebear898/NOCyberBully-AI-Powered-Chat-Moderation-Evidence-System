@@ -28,6 +28,12 @@ Base.metadata.create_all(bind=engine)
 active_connections: Dict[str, WebSocket] = {}
 
 
+def normalize_username(value: str) -> str:
+    if value is None:
+        return ""
+    return value.strip().lower()
+
+
 def get_or_create_user_settings(db: Session, username: str) -> UserSetting:
     setting = db.query(UserSetting).filter(UserSetting.username == username).first()
     if setting:
@@ -72,6 +78,11 @@ async def index(request: Request):
 async def dashboard(request: Request, db: Session = Depends(get_db)):
     logs = db.query(IncidentLog).order_by(IncidentLog.id.desc()).limit(200).all()
     return templates.TemplateResponse("dashboard.html", {"request": request, "logs": logs})
+
+
+@app.get("/presence")
+async def presence():
+    return {"active": sorted(list(active_connections.keys()))}
 
 
 @app.post("/settings")
@@ -137,26 +148,39 @@ async def unblock_user(victim: str = Form(...), offender: str = Form(...), db: S
 @app.websocket("/ws/{username}")
 async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = Depends(get_db)):
     await websocket.accept()
-    active_connections[username] = websocket
+    sender_norm = normalize_username(username)
+    # Handle duplicate connections for same username: close old one if any
+    previous = active_connections.get(sender_norm)
+    if previous is not None and previous is not websocket:
+        try:
+            await previous.send_json({"type": "bot_info", "message": "You have been signed out due to a new login from the same username."})
+        except Exception:
+            pass
+        try:
+            await previous.close()
+        except Exception:
+            pass
+    active_connections[sender_norm] = websocket
     try:
         while True:
             data = await websocket.receive_json()
-            receiver = data.get("to")
+            receiver_raw = data.get("to")
+            receiver = normalize_username(receiver_raw)
             content = data.get("message", "")
 
             # If receiver has blocked sender, do not deliver
-            if is_blocked(db, victim=receiver, offender=username):
+            if is_blocked(db, victim=receiver, offender=sender_norm):
                 await websocket.send_json({
                     "type": "bot",
                     "message": f"Your message was not delivered. You are blocked by {receiver}.",
                 })
                 # Still store the message for audit but skip further processing
-                msg = Message(sender=username, receiver=receiver, content=content)
+                msg = Message(sender=sender_norm, receiver=receiver, content=content)
                 db.add(msg)
                 db.commit()
                 continue
 
-            msg = Message(sender=username, receiver=receiver, content=content)
+            msg = Message(sender=sender_norm, receiver=receiver, content=content)
             db.add(msg)
             db.commit()
             db.refresh(msg)
@@ -167,14 +191,19 @@ async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = 
             if receiver in active_connections:
                 await active_connections[receiver].send_json({
                     "type": "message",
-                    "from": username,
+                    "from": sender_norm,
                     "message": content,
+                })
+            else:
+                await websocket.send_json({
+                    "type": "bot_info",
+                    "message": f"Peer '{receiver}' is not connected right now.",
                 })
 
             # Echo to sender UI as well
             await websocket.send_json({
                 "type": "message",
-                "from": username,
+                "from": sender_norm,
                 "message": content,
             })
 
@@ -189,7 +218,7 @@ async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = 
                     }
                 })
                 settings = get_or_create_user_settings(db, receiver)
-                offenses_before = count_offenses(db, sender=username, victim=receiver)
+                offenses_before = count_offenses(db, sender=sender_norm, victim=receiver)
                 offenses = offenses_before + 1
 
                 # Determine severity and actions
@@ -204,8 +233,8 @@ async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = 
                 else:
                     severity = "blocked"
                     # Block offender for the victim
-                    if not is_blocked(db, victim=receiver, offender=username):
-                        db.add(BlockedUser(victim=receiver, offender=username, status="blocked"))
+                    if not is_blocked(db, victim=receiver, offender=sender_norm):
+                        db.add(BlockedUser(victim=receiver, offender=sender_norm, status="blocked"))
                         db.commit()
                     await websocket.send_json({
                         "type": "bot",
@@ -214,7 +243,7 @@ async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = 
 
                 incident = IncidentLog(
                     message_id=msg.id,
-                    sender=username,
+                    sender=sender_norm,
                     victim=receiver,
                     detected_words=", ".join(words),
                     severity=severity,
@@ -227,13 +256,13 @@ async def websocket_endpoint(websocket: WebSocket, username: str, db: Session = 
                 if receiver in active_connections:
                     await active_connections[receiver].send_json({
                         "type": "bot_info",
-                        "message": f"Abusive language detected from {username}. Severity: {severity}.",
+                        "message": f"Abusive language detected from {sender_norm}. Severity: {severity}.",
                     })
 
     except WebSocketDisconnect:
         pass
     finally:
-        active_connections.pop(username, None)
+        active_connections.pop(sender_norm, None)
 
 
 @app.post("/upload_screenshot")

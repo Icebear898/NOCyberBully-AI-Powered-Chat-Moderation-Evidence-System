@@ -15,6 +15,14 @@ AI-Powered Cyberbullying Detection & Auto-Response System (MVP) using FastAPI + 
 - SQLAlchemy + SQLite
 - Vanilla HTML/CSS/JS with html2canvas
 
+## Documentation
+- docs/01_synopsis.md — Project Synopsis
+- docs/02_architecture.md — Architecture Overview
+- docs/03_api_reference.md — API Reference
+- docs/04_setup_and_running.md — Setup & Running
+- docs/05_detection_and_escalation.md — Detection & Escalation
+- docs/06_reporting_and_privacy.md — Reporting & Privacy
+
 ## Setup
 ```bash
 python3 -m venv .venv
@@ -23,7 +31,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Open `http://127.0.0.1:8000` in two tabs. Use two different usernames, set each other's peer, and chat. Choose a sensitivity (low/medium/high) before connecting.
+Open `http://127.0.0.1:8000` in two tabs. Use two different usernames (usernames are case-insensitive), set each other's peer, and chat. Choose a sensitivity (low/medium/high) before connecting.
 Visit `/dashboard` to view incidents and download a zipped report (CSV + screenshots) per offender-victim pair.
 
 Type abusive words like "idiot", "stupid" (and some basic Hindi terms) to trigger detection. The frontend will capture a screenshot and upload it to `evidence/` path; the backend logs an incident row. Repeated offenses trigger final warning and auto-block.
